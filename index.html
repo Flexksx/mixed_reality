@@ -535,10 +535,10 @@
         position="2 4 2"
       ></a-entity>
 
-      <!-- University Marker (using earth as placeholder) -->
+      <!-- University Marker (UTM) -->
       <a-nft
         type="nft"
-        url="./earth"
+        url="./utm"
         smooth="true"
         smoothCount="50"
         smoothTolerance="0.08"
@@ -547,7 +547,7 @@
       >
         <a-entity position="0 0 0" super-smooth>
           <a-text
-            value="WELCOME TO\nUNIVERSITY"
+            value="WELCOME TO\nUTM"
             align="center"
             position="100 100 -300"
             scale="80 80 80"
@@ -556,7 +556,7 @@
         </a-entity>
       </a-nft>
 
-      <!-- Laptop Marker (using rocket as placeholder) -->
+      <!-- Laptop Marker (TODO: Replace rocket with laptop marker when ready) -->
       <a-nft
         type="nft"
         url="./rocket"
@@ -583,10 +583,10 @@
         </a-entity>
       </a-nft>
 
-      <!-- Books Marker (using moon as placeholder) -->
+      <!-- Books Marker (DDIA Book) -->
       <a-nft
         type="nft"
-        url="./moon"
+        url="./ddia"
         smooth="true"
         smoothCount="50"
         smoothTolerance="0.08"
@@ -594,35 +594,20 @@
         id="marker-books"
       >
         <a-entity position="0 0 0" super-smooth>
-          <a-entity
-            gltf-model="./moon.glb"
-            position="50 -100 -300"
-            scale="40 40 40"
-            rotation="0 0 0"
-          >
-            <a-animation
-              attribute="rotation"
-              from="0 0 0"
-              to="0 360 0"
-              dur="30000"
-              repeat="indefinite"
-              easing="linear"
-            ></a-animation>
-          </a-entity>
           <a-text
-            value="STUDYING HARD!"
+            value="STUDYING HARD!\nDesigning Data-Intensive\nApplications 📚"
             align="center"
-            position="50 150 -300"
+            position="0 100 -250"
             scale="60 60 60"
             color="#2ecc71"
           ></a-text>
         </a-entity>
       </a-nft>
 
-      <!-- Beer Marker (using priza as placeholder) - Will show different content based on path -->
+      <!-- Beer Marker - Will show different content based on path -->
       <a-nft
         type="nft"
-        url="./priza"
+        url="./beer"
         smooth="true"
         smoothCount="50"
         smoothTolerance="0.08"
