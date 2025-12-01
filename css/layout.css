@@ -1,0 +1,123 @@
+/**
+ * Layout Styles
+ * Top bar, bottom bar, corners, and main layout elements
+ */
+
+/* Top Bar */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 15, 30, 0.95) 0%,
+    rgba(15, 15, 30, 0.7) 70%,
+    transparent 100%
+  );
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl) var(--spacing-lg);
+  z-index: 100;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.logo {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--uni-blue);
+  text-shadow: 0 0 10px var(--uni-blue);
+  letter-spacing: 3px;
+}
+
+.logo span {
+  color: var(--uni-amber);
+  text-shadow: 0 0 10px var(--uni-amber);
+}
+
+.status {
+  font-size: 9px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  text-align: right;
+}
+
+.status .online {
+  color: var(--success-green);
+}
+
+/* Bottom Bar */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35px;
+  background: linear-gradient(0deg, rgba(15, 15, 30, 0.9) 0%, transparent 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.scan-hint {
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+}
+
+.scan-hint .target {
+  color: var(--uni-amber);
+  font-weight: 700;
+}
+
+/* Corner Decorations */
+.corner {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(91, 163, 245, 0.4);
+  z-index: 50;
+}
+
+.corner-tl {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 4px 0 0 0;
+}
+
+.corner-tr {
+  top: 8px;
+  right: 8px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 4px 0 0;
+}
+
+.corner-bl {
+  bottom: 8px;
+  left: 8px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 4px;
+}
+
+.corner-br {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 4px 0;
+}
+

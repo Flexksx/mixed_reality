@@ -1,0 +1,117 @@
+/**
+ * Component Styles
+ * Progress dots, chapter panels, and interactive UI components
+ */
+
+/* Progress Dots */
+.progress-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.chapter-dot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--spacing-md) var(--spacing-sm);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(10px);
+}
+
+.chapter-dot.active {
+  border-color: var(--uni-blue);
+  background: rgba(91, 163, 245, 0.12);
+  box-shadow: 0 4px 12px rgba(91, 163, 245, 0.25);
+  transform: translateY(-2px);
+}
+
+.chapter-dot.current {
+  border-color: var(--uni-amber);
+  background: rgba(255, 200, 87, 0.12);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.dot-icon {
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.dot-text {
+  font-size: 8px;
+  color: var(--text-secondary);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.chapter-dot.active .dot-text,
+.chapter-dot.current .dot-text {
+  color: var(--text-primary);
+}
+
+/* Chapter Panel */
+.chapter-panel {
+  position: fixed;
+  bottom: 50px;
+  left: var(--spacing-md);
+  right: var(--spacing-md);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(10, 20, 40, 0.92) 100%
+  );
+  border: 2px solid var(--uni-blue);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  z-index: 150;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all var(--transition-normal);
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-lg);
+}
+
+.chapter-panel.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chapter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.chapter-panel-title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 12px;
+  color: var(--uni-blue);
+  text-shadow: 0 0 8px var(--uni-blue);
+  letter-spacing: 2px;
+}
+
+.chapter-panel-status {
+  font-size: 9px;
+  color: var(--success-green);
+  letter-spacing: 1px;
+}
+
+.chapter-panel-story {
+  font-size: 13px;
+  color: #bbb;
+  line-height: 1.6;
+}
+
+.chapter-panel-story .neon {
+  color: var(--uni-amber);
+  font-weight: 600;
+}
+
