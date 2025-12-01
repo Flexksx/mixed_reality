@@ -10,6 +10,7 @@
 
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap"
       rel="stylesheet"
@@ -174,9 +175,9 @@
             value="WELCOME TO\nUTM"
             align="center"
             position="0 150 0"
-            rotation="0 0 0"
             scale="80 80 80"
             color="#4a90e2"
+            look-at="[camera]"
           ></a-text>
         </a-entity>
       </a-nft>
@@ -197,9 +198,9 @@
             value="TIME TO WORK\n💻"
             align="center"
             position="0 120 0"
-            rotation="0 0 0"
             scale="60 60 60"
             color="#f39c12"
+            look-at="[camera]"
           ></a-text>
         </a-entity>
       </a-nft>
@@ -219,7 +220,6 @@
             gltf-model="./books.glb"
             position="0 80 0"
             scale="200 200 200"
-            rotation="0 0 0"
           >
             <a-animation
               attribute="rotation"
@@ -234,9 +234,9 @@
             value="STUDYING HARD!\nDesigning Data-Intensive\nApplications 📚"
             align="center"
             position="0 200 0"
-            rotation="0 0 0"
             scale="60 60 60"
             color="#2ecc71"
+            look-at="[camera]"
           ></a-text>
         </a-entity>
       </a-nft>
@@ -258,15 +258,14 @@
               gltf-model="./happy.glb"
               position="0 50 0"
               scale="200 200 200"
-              rotation="0 0 0"
             ></a-entity>
             <a-text
               value="PARTY TIME!\nYou earned it!\n🎉🎓✨"
               align="center"
               position="0 180 0"
-              rotation="0 0 0"
               scale="70 70 70"
               color="#2ecc71"
+              look-at="[camera]"
             ></a-text>
           </a-entity>
           <!-- Failure path content -->
@@ -275,15 +274,14 @@
               gltf-model="./homeless.glb"
               position="0 50 0"
               scale="200 200 200"
-              rotation="0 0 0"
             ></a-entity>
             <a-text
               value="CONSEQUENCES\nDropout\n😞💔"
               align="center"
               position="0 180 0"
-              rotation="0 0 0"
               scale="70 70 70"
               color="#e74c3c"
+              look-at="[camera]"
             ></a-text>
           </a-entity>
         </a-entity>
