@@ -60,7 +60,7 @@ export class UIController {
       ? this.elements.victorySuccess 
       : this.elements.victoryFailure;
     
-    setTimeout(() => victoryElement.classList.add("show"), CONFIG.VICTORY_DELAY);
+    victoryElement.classList.add("show");
   }
 
   hideVictories() {
