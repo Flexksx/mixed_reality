@@ -33,11 +33,7 @@
 }
 
 .victory.failure {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 107, 107, 0.15) 0%,
-    rgba(0, 0, 0, 0.98) 100%
-  );
+  background: rgba(0, 0, 0, 0.98);
 }
 
 .victory-badge {
