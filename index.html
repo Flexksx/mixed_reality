@@ -173,7 +173,8 @@
           <a-text
             value="WELCOME TO\nUTM"
             align="center"
-            position="100 100 -300"
+            position="0 0 10"
+            rotation="-90 0 0"
             scale="80 80 80"
             color="#4a90e2"
           ></a-text>
@@ -195,7 +196,8 @@
           <a-text
             value="TIME TO WORK\n💻"
             align="center"
-            position="100 50 100"
+            position="0 0 10"
+            rotation="-90 0 0"
             scale="60 60 60"
             color="#f39c12"
           ></a-text>
@@ -215,14 +217,14 @@
         <a-entity position="0 0 0" super-smooth>
           <a-entity
             gltf-model="./books.glb"
-            position="0 -100 -200"
+            position="0 0 -50"
             scale="100 100 100"
-            rotation="0 0 0"
+            rotation="-90 0 0"
           >
             <a-animation
               attribute="rotation"
-              from="0 0 0"
-              to="0 360 0"
+              from="-90 0 0"
+              to="-90 360 0"
               dur="20000"
               repeat="indefinite"
               easing="linear"
@@ -231,7 +233,8 @@
           <a-text
             value="STUDYING HARD!\nDesigning Data-Intensive\nApplications 📚"
             align="center"
-            position="0 200 -200"
+            position="0 0 80"
+            rotation="-90 0 0"
             scale="60 60 60"
             color="#2ecc71"
           ></a-text>
@@ -253,14 +256,15 @@
           <a-entity id="beer-success" visible="false">
             <a-entity
               gltf-model="./happy.glb"
-              position="0 -50 -200"
+              position="0 0 -50"
               scale="100 100 100"
-              rotation="0 0 0"
+              rotation="-90 0 0"
             ></a-entity>
             <a-text
               value="PARTY TIME!\nYou earned it!\n🎉🎓✨"
               align="center"
-              position="0 200 -200"
+              position="0 0 80"
+              rotation="-90 0 0"
               scale="70 70 70"
               color="#2ecc71"
             ></a-text>
@@ -269,14 +273,15 @@
           <a-entity id="beer-failure" visible="false">
             <a-entity
               gltf-model="./homeless.glb"
-              position="0 -50 -200"
+              position="0 0 -50"
               scale="100 100 100"
-              rotation="0 0 0"
+              rotation="-90 0 0"
             ></a-entity>
             <a-text
               value="CONSEQUENCES\nDropout\n😞💔"
               align="center"
-              position="0 200 -200"
+              position="0 0 80"
+              rotation="-90 0 0"
               scale="70 70 70"
               color="#e74c3c"
             ></a-text>
