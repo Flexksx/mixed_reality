@@ -1,0 +1,15 @@
+{
+  "name": "ar-uni-life-2025",
+  "version": "1.0.0",
+  "description": "AR Experience - UNI LIFE 2025: Making choices that matter in university",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

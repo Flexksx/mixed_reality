@@ -1,261 +1,826 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>AR Interaction Lab (No Super-Hands)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <head>
+    <meta charset="utf-8" />
+    <title>UNI LIFE 2025 - AR Experience</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
 
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <!-- AR.js for A-Frame (marker-based AR) -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <style>
-    body { margin:0; overflow:hidden; }
-    .hud {
-      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      display: grid; grid-template-columns: repeat(5, auto); gap: 8px;
-      font: 600 14px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      z-index: 10; pointer-events: none;
-    }
-    .hud.hidden { display: none; }
-    .hud button {
-      pointer-events: auto;
-      padding: 10px 12px; border: 0; border-radius: 10px;
-      background: rgba(255,255,255,.9);
-    }
-  </style>
-
-  <script>
-  // ---------- Utilities ----------
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-
-  // ---------- 1) Tap / doubletap / longpress ----------
-  AFRAME.registerComponent('tap-gestures', {
-    schema: {longMs:{default:500}},
-    init () {
-      let lastTap = 0, pressTimer = null, down = false;
-      this.el.addEventListener('mousedown', () => {
-        down = true;
-        const now = performance.now();
-        if (now - lastTap < 300) this.el.emit('doubletap');
-        lastTap = now;
-        pressTimer = setTimeout(() => { if (down) this.el.emit('longpress'); }, this.data.longMs);
-      });
-      this.el.addEventListener('mouseup', () => {
-        down = false;
-        clearTimeout(pressTimer);
-        this.el.emit('tap');
-      });
-      this.el.addEventListener('touchstart', e => e.preventDefault(), {passive:false});
-    }
-  });
-
-  // ---------- 2) Drag on a plane (marker plane) ----------
-  // Drag with mouse/touch by intersecting an invisible plane and moving the entity to that point.
-  AFRAME.registerComponent('drag-on-plane', {
-    schema: { plane: {type: 'selector'}, yOffset: {default: 0.25}, radius: {default: 0.6} },
-    init () {
-      this.dragging = false;
-      this.scene = this.el.sceneEl;
-      this.rayEl = document.querySelector('#ray'); // scene cursor ray
-      // listen on element
-      this.el.addEventListener('mousedown', () => this.dragging = true);
-      window.addEventListener('mouseup',   () => this.dragging = false);
-      window.addEventListener('touchend',  () => this.dragging = false);
-      // move
-      this.scene.addEventListener('mousemove', (e)=> this.updateDrag());
-      this.scene.addEventListener('touchmove', (e)=> this.updateDrag());
-    },
-    updateDrag () {
-      if (!this.dragging) return;
-      if (!this.data.plane) return;
-      const raycaster = this.rayEl.getObject3D('raycaster');
-      if (!raycaster) return;
-      const planeMesh = this.data.plane.getObject3D('mesh');
-      if (!planeMesh) return;
-
-      // Build a THREE.Plane from the plane entity (its world transform).
-      planeMesh.updateMatrixWorld();
-      const normal = new THREE.Vector3(0,1,0).applyQuaternion(planeMesh.getWorldQuaternion(new THREE.Quaternion()));
-      const point  = planeMesh.getWorldPosition(new THREE.Vector3());
-      const plane  = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, point);
-
-      const ray = raycaster.ray; // world-space ray from cursor
-      const hit = new THREE.Vector3();
-      if (ray.intersectPlane(plane, hit)) {
-        // constrain to radius on XZ around marker center
-        const local = this.el.parentEl.object3D.worldToLocal(hit.clone());
-        const r = Math.hypot(local.x, local.z);
-        const maxR = this.data.radius;
-        if (r > maxR){
-          const k = maxR / r;
-          local.x *= k; local.z *= k;
-        }
-        this.el.setAttribute('position', `${local.x} ${this.data.yOffset} ${local.z}`);
+    <style>
+      :root {
+        --uni-blue: #4a90e2;
+        --uni-amber: #f39c12;
+        --success-green: #2ecc71;
+        --fail-red: #e74c3c;
+        --fail-gray: #95a5a6;
+        --dark-bg: #0a0a12;
       }
-    }
-  });
 
-  // ---------- 3) Pinch to scale ----------
-  AFRAME.registerComponent('pinch-scale', {
-    schema: {min:{default:0.2}, max:{default:3}},
-    init(){
-      this.active = false; this.startD = 0; this.startScale = null;
-      const onStart = (e) => {
-        if (e.touches && e.touches.length === 2){
-          this.active = true;
-          this.startD = this.dist(e.touches[0], e.touches[1]);
-          this.startScale = Object.assign({}, this.el.getAttribute('scale'));
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: "Rajdhani", sans-serif;
+        background: var(--dark-bg);
+      }
+
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--dark-bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s, visibility 0.5s;
+      }
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .loader-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--uni-blue);
+        text-shadow: 0 0 20px var(--uni-blue);
+        letter-spacing: 6px;
+      }
+      .loader-bar {
+        width: 150px;
+        height: 2px;
+        background: #222;
+        margin-top: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .loader-bar::after {
+        content: "";
+        position: absolute;
+        left: -50%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--uni-blue),
+          transparent
+        );
+        animation: loadingBar 1.5s infinite;
+      }
+      @keyframes loadingBar {
+        0% {
+          left: -50%;
         }
-      };
-      const onMove = (e) => {
-        if (!this.active || !e.touches || e.touches.length < 2) return;
-        const d = this.dist(e.touches[0], e.touches[1]);
-        const mult = d / this.startD;
-        const ns = {
-          x: clamp(this.startScale.x * mult, this.data.min, this.data.max),
-          y: clamp(this.startScale.y * mult, this.data.min, this.data.max),
-          z: clamp(this.startScale.z * mult, this.data.min, this.data.max),
-        };
-        this.el.setAttribute('scale', ns);
-      };
-      const onEnd = () => this.active = false;
-      window.addEventListener('touchstart', onStart, {passive:false});
-      window.addEventListener('touchmove',  onMove,  {passive:false});
-      window.addEventListener('touchend',   onEnd);
-      window.addEventListener('touchcancel',onEnd);
-    },
-    dist(a,b){ const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY; return Math.hypot(dx,dy); }
-  });
-
-  // ---------- 4) Twist to rotate (two-finger) ----------
-  AFRAME.registerComponent('twist-rotate', {
-    schema:{degPerRad:{default:57.2958}}, // 180/π
-    init(){
-      this.active = false; this.startA = 0; this.startRotY = 0;
-      const angle = (a,b)=> Math.atan2(b.clientY-a.clientY, b.clientX-a.clientX);
-      const onStart = (e)=>{
-        if (e.touches && e.touches.length === 2){
-          this.active = true;
-          this.startA = angle(e.touches[0], e.touches[1]);
-          this.startRotY = this.el.getAttribute('rotation').y;
+        100% {
+          left: 100%;
         }
-      };
-      const onMove = (e)=>{
-        if (!this.active || !e.touches || e.touches.length < 2) return;
-        const a = angle(e.touches[0], e.touches[1]);
-        const delta = (a - this.startA) * this.data.degPerRad;
-        const r = this.el.getAttribute('rotation');
-        this.el.setAttribute('rotation', {x:r.x, y:this.startRotY + delta, z:r.z});
-      };
-      const onEnd = ()=> this.active = false;
-      window.addEventListener('touchstart', onStart, {passive:false});
-      window.addEventListener('touchmove',  onMove,  {passive:false});
-      window.addEventListener('touchend',   onEnd);
-      window.addEventListener('touchcancel',onEnd);
-    }
-  });
+      }
 
-  // ---------- 5) Spin toggler + random color (hooked to taps) ----------
-  AFRAME.registerComponent('spin-toggle', {
-    schema:{speed:{default:4000}},
-    init(){
-      this.spinning = false;
-      this.el.addEventListener('toggle-spin', ()=> {
-        this.spinning = !this.spinning;
-        if (this.spinning) {
-          this.el.setAttribute('animation__spin',
-            `property: rotation; to: 0 360 0; loop: true; dur: ${this.data.speed}`);
+      .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.9) 0%,
+          rgba(0, 0, 0, 0.7) 70%,
+          transparent 100%
+        );
+        padding: 12px 15px 20px 15px;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      .top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .logo {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: 16px;
+        color: var(--uni-blue);
+        text-shadow: 0 0 10px var(--uni-blue);
+        letter-spacing: 3px;
+      }
+      .logo span {
+        color: var(--uni-amber);
+        text-shadow: 0 0 10px var(--uni-amber);
+      }
+
+      .status {
+        font-size: 9px;
+        color: #555;
+        letter-spacing: 1px;
+        text-align: right;
+      }
+      .status .online {
+        color: var(--success-green);
+      }
+
+      .progress-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .chapter-dot {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 6px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid #222;
+        border-radius: 6px;
+        transition: all 0.3s;
+      }
+      .chapter-dot.active {
+        border-color: var(--uni-blue);
+        box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+      }
+      .chapter-dot.current {
+        border-color: var(--uni-amber);
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 5px var(--uni-amber);
+        }
+        50% {
+          box-shadow: 0 0 12px var(--uni-amber);
+        }
+      }
+      .dot-icon {
+        font-size: 16px;
+      }
+      .dot-text {
+        font-size: 8px;
+        color: #555;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .chapter-dot.active .dot-text,
+      .chapter-dot.current .dot-text {
+        color: #aaa;
+      }
+
+      .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 35px;
+        background: linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.8) 0%,
+          transparent 100%
+        );
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        pointer-events: none;
+      }
+      .scan-hint {
+        font-size: 10px;
+        color: #666;
+        letter-spacing: 2px;
+      }
+      .scan-hint .target {
+        color: var(--uni-amber);
+        font-weight: 700;
+      }
+
+      .corner {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        border: 1px solid rgba(74, 144, 226, 0.4);
+        z-index: 50;
+      }
+      .corner-tl {
+        top: 8px;
+        left: 8px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .corner-tr {
+        top: 8px;
+        right: 8px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .corner-bl {
+        bottom: 8px;
+        left: 8px;
+        border-right: none;
+        border-top: none;
+      }
+      .corner-br {
+        bottom: 8px;
+        right: 8px;
+        border-left: none;
+        border-top: none;
+      }
+
+      .chapter-panel {
+        position: fixed;
+        bottom: 50px;
+        left: 12px;
+        right: 12px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 0, 0, 0.92) 0%,
+          rgba(10, 20, 40, 0.92) 100%
+        );
+        border: 1px solid var(--uni-blue);
+        border-radius: 8px;
+        padding: 14px 16px;
+        z-index: 150;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+      .chapter-panel.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .chapter-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .chapter-panel-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 12px;
+        color: var(--uni-blue);
+        text-shadow: 0 0 8px var(--uni-blue);
+        letter-spacing: 2px;
+      }
+      .chapter-panel-status {
+        font-size: 9px;
+        color: var(--success-green);
+        letter-spacing: 1px;
+      }
+      .chapter-panel-story {
+        font-size: 13px;
+        color: #bbb;
+        line-height: 1.5;
+      }
+      .chapter-panel-story .neon {
+        color: var(--uni-amber);
+        font-weight: 600;
+      }
+
+      .victory {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 300;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s;
+      }
+      .victory.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      .victory.success {
+        background: radial-gradient(
+          ellipse at center,
+          rgba(46, 204, 113, 0.15) 0%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      }
+      .victory.failure {
+        background: radial-gradient(
+          ellipse at center,
+          rgba(231, 76, 60, 0.15) 0%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      }
+      .victory-badge {
+        width: 70px;
+        height: 70px;
+        border: 2px solid var(--success-green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 35px;
+        margin-bottom: 15px;
+        box-shadow: 0 0 25px var(--success-green);
+      }
+      .victory.failure .victory-badge {
+        border-color: var(--fail-red);
+        box-shadow: 0 0 25px var(--fail-red);
+      }
+      .victory-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 18px;
+        font-weight: 900;
+        color: var(--success-green);
+        text-shadow: 0 0 15px var(--success-green);
+        letter-spacing: 4px;
+        margin-bottom: 8px;
+      }
+      .victory.failure .victory-title {
+        color: var(--fail-red);
+        text-shadow: 0 0 15px var(--fail-red);
+      }
+      .victory-subtitle {
+        font-size: 11px;
+        color: #666;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+      }
+      .victory-story {
+        max-width: 280px;
+        text-align: center;
+        margin-bottom: 25px;
+      }
+      .victory-story p {
+        font-size: 12px;
+        color: #888;
+        line-height: 1.5;
+        margin: 8px 0;
+      }
+      .victory-story .em {
+        color: var(--uni-amber);
+        font-weight: 600;
+      }
+      .victory.failure .victory-story .em {
+        color: var(--fail-gray);
+      }
+      .victory-btn {
+        font-family: "Orbitron", sans-serif;
+        padding: 12px 30px;
+        font-size: 10px;
+        letter-spacing: 2px;
+        background: transparent;
+        color: var(--uni-blue);
+        border: 1px solid var(--uni-blue);
+        cursor: pointer;
+        transition: all 0.3s;
+        pointer-events: auto;
+      }
+      .victory-btn:active {
+        background: var(--uni-blue);
+        color: #000;
+      }
+    </style>
+
+    <script>
+      AFRAME.registerComponent("super-smooth", {
+        schema: {
+          position: { type: "vec3" },
+          rotation: { type: "vec3" },
+        },
+        init: function () {
+          this.smoothPos = new THREE.Vector3();
+          this.smoothRot = new THREE.Euler();
+          this.initialized = false;
+        },
+        tick: function () {
+          const obj = this.el.object3D;
+          if (!this.initialized) {
+            this.smoothPos.copy(obj.position);
+            this.smoothRot.copy(obj.rotation);
+            this.initialized = true;
+            return;
+          }
+          const factor = 0.1;
+          this.smoothPos.lerp(obj.position, factor);
+          this.smoothRot.x += (obj.rotation.x - this.smoothRot.x) * factor;
+          this.smoothRot.y += (obj.rotation.y - this.smoothRot.y) * factor;
+          this.smoothRot.z += (obj.rotation.z - this.smoothRot.z) * factor;
+          obj.position.copy(this.smoothPos);
+          obj.rotation.copy(this.smoothRot);
+        },
+      });
+    </script>
+  </head>
+  <body>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="loader" id="loader">
+      <div class="loader-title">UNI LIFE 2025</div>
+      <div class="loader-bar"></div>
+    </div>
+
+    <div class="top-bar">
+      <div class="top-row">
+        <div class="logo">UNI<span>LIFE</span></div>
+        <div class="status">
+          SYSTEM <span class="online">ONLINE</span><br />AR TRACKING
+        </div>
+      </div>
+      <div class="progress-row">
+        <div class="chapter-dot current" id="dot1">
+          <span class="dot-icon">🎓</span>
+          <span class="dot-text">Campus</span>
+        </div>
+        <div class="chapter-dot" id="dot2">
+          <span class="dot-icon">💻</span>
+          <span class="dot-text">Work</span>
+        </div>
+        <div class="chapter-dot" id="dot3">
+          <span class="dot-icon">📚</span>
+          <span class="dot-text">Study</span>
+        </div>
+        <div class="chapter-dot" id="dot4">
+          <span class="dot-icon">🍺</span>
+          <span class="dot-text">Party</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="scan-hint">
+        SCAN <span class="target" id="scan-target">UNIVERSITY</span>
+      </div>
+    </div>
+
+    <div class="chapter-panel" id="chapter-panel">
+      <div class="chapter-panel-header">
+        <div class="chapter-panel-title" id="panel-title">
+          CHAPTER I: THE SEMESTER
+        </div>
+        <div class="chapter-panel-status">SCANNING</div>
+      </div>
+      <div class="chapter-panel-story" id="panel-story">Story content...</div>
+    </div>
+
+    <div class="victory success" id="victory-success">
+      <div class="victory-badge">🎉</div>
+      <div class="victory-title">BALANCED!</div>
+      <div class="victory-subtitle">SUCCESS ACHIEVED</div>
+      <div class="victory-story">
+        <p>Assignments submitted. <span class="em">Grades: 85%</span>.</p>
+        <p>
+          You arrive at the party, exhausted but accomplished. Your
+          <span class="em">friends cheer</span> - they knew you'd make it.
+        </p>
+        <p>
+          Tonight, you celebrate <span class="em">together</span>. Balance
+          achieved. 🎓✨
+        </p>
+      </div>
+      <button class="victory-btn" onclick="resetStory()">RESTART</button>
+    </div>
+
+    <div class="victory failure" id="victory-failure">
+      <div class="victory-badge">😞</div>
+      <div class="victory-title">BURNED OUT</div>
+      <div class="victory-subtitle">PRIORITIES MATTER</div>
+      <div class="victory-story">
+        <p>
+          The party was fun. The semester? <span class="em">Not so much</span>.
+        </p>
+        <p>
+          <span class="em">Three failed courses</span>. Academic probation. Your
+          friends? They graduated.
+        </p>
+        <p>
+          You didn't. Now you're figuring out life the
+          <span class="em">hard way</span>. 💔
+        </p>
+      </div>
+      <button class="victory-btn" onclick="resetStory()">RESTART</button>
+    </div>
+
+    <a-scene
+      embedded
+      renderer="colorManagement: true; physicallyCorrectLights: true; logarithmicDepthBuffer: true"
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
+      id="scene"
+    >
+      <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+      <a-entity
+        light="type: directional; intensity: 0.9; castShadow: true"
+        position="2 4 2"
+      ></a-entity>
+
+      <!-- University Marker (using earth as placeholder) -->
+      <a-nft
+        type="nft"
+        url="./earth"
+        smooth="true"
+        smoothCount="50"
+        smoothTolerance="0.08"
+        smoothThreshold="15"
+        id="marker-university"
+      >
+        <a-entity position="0 0 0" super-smooth>
+          <a-text
+            value="WELCOME TO\nUNIVERSITY"
+            align="center"
+            position="100 100 -300"
+            scale="80 80 80"
+            color="#4a90e2"
+          ></a-text>
+        </a-entity>
+      </a-nft>
+
+      <!-- Laptop Marker (using rocket as placeholder) -->
+      <a-nft
+        type="nft"
+        url="./rocket"
+        smooth="true"
+        smoothCount="50"
+        smoothTolerance="0.08"
+        smoothThreshold="15"
+        id="marker-laptop"
+      >
+        <a-entity position="0 0 0" super-smooth>
+          <a-entity
+            gltf-model="./rocket.glb"
+            position="100 -240 130"
+            scale="40 40 40"
+            rotation="270 0 0"
+          ></a-entity>
+          <a-text
+            value="TIME TO WORK"
+            align="center"
+            position="100 50 100"
+            scale="50 50 50"
+            color="#f39c12"
+          ></a-text>
+        </a-entity>
+      </a-nft>
+
+      <!-- Books Marker (using moon as placeholder) -->
+      <a-nft
+        type="nft"
+        url="./moon"
+        smooth="true"
+        smoothCount="50"
+        smoothTolerance="0.08"
+        smoothThreshold="15"
+        id="marker-books"
+      >
+        <a-entity position="0 0 0" super-smooth>
+          <a-entity
+            gltf-model="./moon.glb"
+            position="50 -100 -300"
+            scale="40 40 40"
+            rotation="0 0 0"
+          >
+            <a-animation
+              attribute="rotation"
+              from="0 0 0"
+              to="0 360 0"
+              dur="30000"
+              repeat="indefinite"
+              easing="linear"
+            ></a-animation>
+          </a-entity>
+          <a-text
+            value="STUDYING HARD!"
+            align="center"
+            position="50 150 -300"
+            scale="60 60 60"
+            color="#2ecc71"
+          ></a-text>
+        </a-entity>
+      </a-nft>
+
+      <!-- Beer Marker (using priza as placeholder) - Will show different content based on path -->
+      <a-nft
+        type="nft"
+        url="./priza"
+        smooth="true"
+        smoothCount="50"
+        smoothTolerance="0.08"
+        smoothThreshold="15"
+        id="marker-beer"
+      >
+        <a-entity position="0 0 0" super-smooth>
+          <!-- Success path content -->
+          <a-entity id="beer-success" visible="false">
+            <a-text
+              value="PARTY TIME!\nYou earned it!\n🎉🎓✨"
+              align="center"
+              position="0 150 -300"
+              scale="70 70 70"
+              color="#2ecc71"
+            ></a-text>
+            <a-sphere
+              position="0 0 -300"
+              radius="80"
+              color="#2ecc71"
+              opacity="0.3"
+            ></a-sphere>
+          </a-entity>
+          <!-- Failure path content -->
+          <a-entity id="beer-failure" visible="false">
+            <a-text
+              value="CONSEQUENCES\nDropout\n😞💔"
+              align="center"
+              position="0 150 -300"
+              scale="70 70 70"
+              color="#e74c3c"
+            ></a-text>
+            <a-sphere
+              position="0 0 -300"
+              radius="80"
+              color="#e74c3c"
+              opacity="0.3"
+            ></a-sphere>
+          </a-entity>
+        </a-entity>
+      </a-nft>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      const storyData = {
+        university: {
+          title: "CHAPTER I: THE SEMESTER",
+          story: `It's <span class="neon">Week 12</span> of the semester. Three major assignments due in <span class="neon">48 hours</span>. Your friends are throwing a party tonight. The question is: <span class="neon">what will you prioritize?</span>`,
+          target: "UNIVERSITY",
+        },
+        laptop: {
+          title: "CHAPTER II: THE GRIND",
+          story: `Laptop open. Coffee brewing. <span class="neon">Assignment 1</span> stares back at you from the screen. You know you should focus, but your phone keeps buzzing with party invites. <span class="neon">Choose wisely.</span>`,
+          target: "LAPTOP",
+        },
+        books: {
+          title: "CHAPTER III: THE HUSTLE",
+          story: `You hit the books. <span class="neon">3 hours</span> of focused studying. Notes organized, concepts mastered. The party can wait - you're on a roll. Your friends will understand. <span class="neon">Discipline pays off.</span>`,
+          target: "BOOKS",
+        },
+        beerSuccess: {
+          title: "CHAPTER IV: THE BALANCE",
+          story: `Assignments submitted. <span class="neon">Grades: 85%</span>. You arrive at the party, exhausted but accomplished. Your friends cheer - they knew you'd make it. Tonight, you celebrate <span class="neon">together</span>. You've earned it. Balance achieved.`,
+          target: "BEER",
+        },
+        beerFailure: {
+          title: "THE DROPOUT",
+          story: `The party was fun. The semester? <span class="neon">Not so much.</span> Three failed courses. Academic probation. Your friends? They graduated. You didn't. Now you're figuring out life the hard way. <span class="neon">Priorities matter.</span>`,
+          target: "BEER",
+        },
+      };
+
+      let progress = [false, false, false, false];
+      let studiedBooks = false;
+      let path = null;
+
+      const loader = document.getElementById("loader");
+      const scanTarget = document.getElementById("scan-target");
+      const chapterPanel = document.getElementById("chapter-panel");
+      const panelTitle = document.getElementById("panel-title");
+      const panelStory = document.getElementById("panel-story");
+      const victorySuccess = document.getElementById("victory-success");
+      const victoryFailure = document.getElementById("victory-failure");
+      const dots = [
+        document.getElementById("dot1"),
+        document.getElementById("dot2"),
+        document.getElementById("dot3"),
+        document.getElementById("dot4"),
+      ];
+
+      document.getElementById("scene").addEventListener("loaded", () => {
+        setTimeout(() => loader.classList.add("hidden"), 1500);
+      });
+
+      const markers = [
+        document.getElementById("marker-university"),
+        document.getElementById("marker-laptop"),
+        document.getElementById("marker-books"),
+        document.getElementById("marker-beer"),
+      ];
+
+      markers.forEach((marker, i) => {
+        if (marker) {
+          marker.addEventListener("markerFound", () => onMarkerFound(i));
+          marker.addEventListener("markerLost", () =>
+            chapterPanel.classList.remove("show")
+          );
+        }
+      });
+
+      function onMarkerFound(i) {
+        const step = progress.filter((x) => x).length;
+
+        // Chapter 0: University (must be first)
+        if (i === 0 && step === 0) {
+          progress[0] = true;
+          showStory(storyData.university);
+          updateDots();
+        }
+        // Chapter 1: Laptop (must be second)
+        else if (i === 1 && step === 1) {
+          progress[1] = true;
+          showStory(storyData.laptop);
+          updateDots();
+        }
+        // Chapter 2: Books (optional - creates success path)
+        else if (i === 2 && step === 2) {
+          progress[2] = true;
+          studiedBooks = true;
+          showStory(storyData.books);
+          updateDots();
+        }
+        // Chapter 3: Beer (final - branches based on studiedBooks)
+        else if (i === 3 && step >= 2) {
+          progress[3] = true;
+
+          if (studiedBooks) {
+            // SUCCESS PATH
+            path = "success";
+            showStory(storyData.beerSuccess);
+            document
+              .getElementById("beer-success")
+              .setAttribute("visible", "true");
+            setTimeout(() => victorySuccess.classList.add("show"), 1500);
+          } else {
+            // FAILURE PATH (skipped books)
+            path = "failure";
+            showStory(storyData.beerFailure);
+            document
+              .getElementById("beer-failure")
+              .setAttribute("visible", "true");
+            setTimeout(() => victoryFailure.classList.add("show"), 1500);
+          }
+          updateDots();
+        }
+      }
+
+      function showStory(chapter) {
+        panelTitle.textContent = chapter.title;
+        panelStory.innerHTML = chapter.story;
+        chapterPanel.classList.add("show");
+      }
+
+      function updateDots() {
+        const step = progress.filter((x) => x).length;
+        progress.forEach((done, i) => {
+          dots[i].classList.toggle("active", done);
+          dots[i].classList.toggle("current", i === step && step < 4);
+        });
+        if (step < 4) {
+          const targets = ["UNIVERSITY", "LAPTOP", "BOOKS", "BEER"];
+          scanTarget.textContent = targets[step];
         } else {
-          this.el.removeAttribute('animation__spin');
+          scanTarget.textContent = "COMPLETE";
         }
-      });
-      this.el.addEventListener('random-color', ()=> {
-        const colors = ['#4CC3D9','#FFC65D','#7BC8A4','#EF2D5E','#FFFFFF'];
-        const c = colors[Math.floor(Math.random()*colors.length)];
-        this.el.setAttribute('material','color',c);
-      });
-    }
-  });
-  </script>
-</head>
-<body>
-  <!-- HUD -->
-  <div class="hud" id="hud">
-    <button id="btn-rot-l">⟲</button>
-    <button id="btn-rot-r">⟳</button>
-    <button id="btn-scale--">−</button>
-    <button id="btn-scale-+">＋</button>
-    <button id="btn-color">🎨</button>
-  </div>
+      }
 
-  <a-scene
-    embedded
-    renderer="colorManagement: true; physicallyCorrectLights: true"
-    xr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; detectionMode: mono; debugUIEnabled: false">
-
-    <!-- Cursor ray for mouse/touch (A-Frame builds a raycaster object3D for us) -->
-    <a-entity id="ray" cursor="rayOrigin: mouse" raycaster="objects: .raytarget"></a-entity>
-
-    <!-- Lights -->
-    <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-    <a-entity light="type: directional; intensity: 0.6" position="0 1 1"></a-entity>
-
-    <!-- Marker -->
-    <a-marker preset="hiro" id="marker">
-
-      <!-- Invisible drag plane anchored to marker -->
-      <a-plane id="dragplane" class="raytarget"
-               position="0 0 0" rotation="-90 0 0" width="2" height="2"
-               material="color: #000; opacity: 0; transparent: true"></a-plane>
-
-      <!-- Interactive object -->
-      <a-box id="cube" class="raytarget"
-             position="0 0.25 0" depth="0.5" height="0.5" width="0.5"
-             material="metalness:0.1; roughness:0.6; color:#4CC3D9"
-             tap-gestures spin-toggle
-             drag-on-plane="plane: #dragplane; yOffset: 0.25; radius: 0.6"
-             pinch-scale twist-rotate>
-      </a-box>
-
-      <!-- Marker center dot (optional) -->
-      <a-cylinder radius="0.01" height="0.001" color="#888"></a-cylinder>
-    </a-marker>
-
-    <a-entity camera></a-entity>
-  </a-scene>
-
-  <script>
-    const hud  = document.getElementById('hud');
-    const cube = document.getElementById('cube');
-
-    // Buttons
-    document.getElementById('btn-rot-l').addEventListener('click', () => nudgeRot(-15));
-    document.getElementById('btn-rot-r').addEventListener('click', () => nudgeRot( 15));
-    function nudgeRot(delta){
-      const r = cube.getAttribute('rotation');
-      cube.setAttribute('rotation', {x:r.x, y:r.y + delta, z:r.z});
-    }
-
-    document.getElementById('btn-scale--').addEventListener('click', () => nudgeScale(0.9));
-    document.getElementById('btn-scale-+').addEventListener('click', () => nudgeScale(1.1));
-    function nudgeScale(mult){
-      const s = cube.getAttribute('scale');
-      cube.setAttribute('scale', {
-        x: clamp(s.x * mult, 0.2, 3),
-        y: clamp(s.y * mult, 0.2, 3),
-        z: clamp(s.z * mult, 0.2, 3)
-      });
-    }
-
-    document.getElementById('btn-color').addEventListener('click', () => cube.emit('random-color'));
-
-    // Gesture hooks
-    cube.addEventListener('tap',       () => cube.emit('toggle-spin'));        // single tap: spin on/off
-    cube.addEventListener('doubletap', () => cube.emit('random-color'));       // double tap: recolor
-    cube.addEventListener('longpress', () => hud.classList.toggle('hidden'));  // long press: show/hide HUD
-  </script>
-</body>
+      function resetStory() {
+        progress = [false, false, false, false];
+        studiedBooks = false;
+        path = null;
+        victorySuccess.classList.remove("show");
+        victoryFailure.classList.remove("show");
+        document
+          .getElementById("beer-success")
+          .setAttribute("visible", "false");
+        document
+          .getElementById("beer-failure")
+          .setAttribute("visible", "false");
+        dots.forEach((d, i) => {
+          d.classList.remove("active");
+          d.classList.toggle("current", i === 0);
+        });
+        scanTarget.textContent = "UNIVERSITY";
+        chapterPanel.classList.remove("show");
+      }
+    </script>
+  </body>
 </html>
