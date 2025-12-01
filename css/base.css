@@ -10,7 +10,7 @@
 body {
   margin: 0;
   overflow: hidden;
-  font-family: "Rajdhani", sans-serif;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
   background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
   color: var(--text-primary);
 }
